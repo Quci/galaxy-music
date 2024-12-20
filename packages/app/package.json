@@ -4,9 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rspack",
+    "start": "rspack serve"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@swc/helpers": "^0.5.15",
+    "three": "^0.171.0",
+    "three-stdlib": "^2.33.0"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.1.4",
+    "@rspack/core": "^1.1.6",
+    "@types/three": "^0.169.0"
+  }
 }

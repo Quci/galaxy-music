@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Three.js 自由轨迹光球示例</title>
+	<style>
+		body { margin: 0; }
+		canvas { display: block; }
+	</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+<script>
+	// Perlin Noise 实现
+	function fade(t) {
+		return t * t * t * (t * (t * 6 - 15) + 10);
+	}
+
+	function lerp(t, a, b) {
+		return a + t * (b - a);
+	}
+
+	function grad(hash, x, y, z) {
+		const h = hash & 15;
+		const u = h < 8 ? x : y;
+		const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+		return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+	}
+
+	function perlinNoise(x, y, z) {
+		const p = new Array(512);
+		const permutation = [151, 160, 137, 91, 90, 15,
+			131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142,
+			8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120, 234, 75, 0, 26,
+			197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33, 88, 237, 149,
+			56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48,
+			27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133, 230, 220, 105,
+			92, 41, 55, 46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161, 1, 216,
+			80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135, 130, 116, 188,
+			159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250, 124, 123,
+			5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16,
+			58, 17, 182, 189, 28, 42, 223, 183, 170, 213, 119, 248, 152, 2, 44, 154,
+			163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98,
+			108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 251, 34,
+			242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14,
+			239, 107, 49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121,
+			50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72,
+			243, 141, 128, 195, 78, 66, 215, 61, 156, 180
+		];
+
+		for (let i = 0; i < 256; i++) {
+			p[256 + i] = p[i] = permutation[i];
+		}
+
+		const X = Math.floor(x) & 255;
+		const Y = Math.floor(y) & 255;
+		const Z = Math.floor(z) & 255;
+
+		x -= Math.floor(x);
+		y -= Math.floor(y);
+		z -= Math.floor(z);
+
+		const u = fade(x);
+		const v = fade(y);
+		const w = fade(z);
+
+		const A = p[X] + Y;
+		const AA = p[A] + Z;
+		const AB = p[A + 1] + Z;
+		const B = p[X + 1] + Y;
+		const BA = p[B] + Z;
+		const BB = p[B + 1] + Z;
+
+		return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z),
+					grad(p[BA], x - 1, y, z)),
+				lerp(u, grad(p[AB], x, y - 1, z),
+					grad(p[BB], x - 1, y - 1, z))),
+			lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1),
+					grad(p[BA + 1], x - 1, y, z - 1)),
+				lerp(u, grad(p[AB + 1], x, y - 1, z - 1),
+					grad(p[BB + 1], x - 1, y - 1, z - 1))));
+	}
+
+	// 全局变量用于调整速度
+	const speedFactor = 0.5;
+
+	// 创建场景
+	const scene = new THREE.Scene();
+
+	// 创建相机
+	const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+	camera.position.z = 600;
+
+	// 创建渲染器并启用抗锯齿功能
+	const renderer = new THREE.WebGLRenderer({ antialias: true });
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.setPixelRatio(window.devicePixelRatio); // 使用设备像素比
+	document.body.appendChild(renderer.domElement);
+
+	// 创建光球的几何体和材质
+	const geometry = new THREE.SphereGeometry(1.5, 32, 32); // 光球大小调整
+	const material = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1 });
+
+	// 创建并添加多个光球到场景中
+	const spheres = [];
+	const sphereCount = 1000; // 光球数量调整
+	const spaceSize = 500; // 空间大小
+	const yRange = spaceSize / 2; // 控制Y轴上的分布范围
+
+	for (let i = 0; i < sphereCount; i++) {
+		const sphere = new THREE.Mesh(geometry, material);
+		// 随机设置光球的位置
+		const radius = Math.random() * spaceSize;
+		const angle = Math.random() * Math.PI * 2;
+		const height = (Math.random() * 0.5 - 0.25) * yRange; // 控制Y轴上的分布范围在顶部1/4到底部1/4之间
+		sphere.position.set(
+			Math.cos(angle) * radius,
+			height, // 控制Y轴上的分布范围
+			Math.sin(angle) * radius
+		);
+		scene.add(sphere);
+		spheres.push(sphere);
+
+		// 为每个光球添加光晕效果
+		const spriteMaterial = new THREE.SpriteMaterial({
+			map: new THREE.TextureLoader().load('https://threejs.org/examples/textures/lensflare/lensflare0.png'),
+			color: 0xffffff,
+			transparent: true,
+			blending: THREE.AdditiveBlending
+		});
+
+		const sprite = new THREE.Sprite(spriteMaterial);
+		sprite.scale.set(10, 10, 1); // 调整光晕的大小
+		sphere.add(sprite);
+	}
+
+	// 创建环境光和点光源
+	const ambientLight = new THREE.AmbientLight(0x404040, 1); // 环境光
+	scene.add(ambientLight);
+
+	const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+	pointLight.position.set(0, 0, 200);
+	scene.add(pointLight);
+
+	// 创建后处理特效
+	const composer = new THREE.EffectComposer(renderer);
+	const renderPass = new THREE.RenderPass(scene, camera);
+	composer.addPass(renderPass);
+
+	const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+	fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+	composer.addPass(fxaaPass);
+
+	// 动画函数
+	function animate() {
+		requestAnimationFrame(animate);
+
+		// 让光球围绕屏幕中心像漩涡一样旋转，同时引入噪声使运动轨迹更自由
+		const time = Date.now() * 0.0005 * speedFactor;
+		for (let i = 0; i < spheres.length; i++) {
+			const sphere = spheres[i];
+			const angle = time + i * 0.02;
+			const radius = Math.sqrt(sphere.position.x ** 2 + sphere.position.z ** 2);
+			const noiseFactor = perlinNoise(sphere.position.x * 0.01, sphere.position.y * 0.01, time * 0.1);
+			sphere.position.x = Math.cos(angle + noiseFactor) * radius;
+			sphere.position.z = Math.sin(angle + noiseFactor) * radius;
+			sphere.position.y += noiseFactor * 0.5; // 引入噪声使Y轴上的运动更加自由
+
+			// 如果光球在z轴上离相机太近，就将其设置为不可见
+			sphere.visible = sphere.position.z > -50;
+		}
+
+		composer.render();
+	}
+
+	// 调整窗口大小自适应
+	window.addEventListener('resize', () => {
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		composer.setSize(window.innerWidth, window.innerHeight);
+		fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+	});
+
+	// 开始动画
+	animate();
+</script>
+</body>
+</html>

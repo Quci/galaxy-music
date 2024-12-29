@@ -8,9 +8,15 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'dist')
-    },
+    static: [
+      {
+        directory: path.join(__dirname, 'dist')
+      },
+      {
+        directory: path.join(__dirname, 'assets')
+      },
+
+    ],
     compress: true,
     port: 9000,
     open: true
@@ -43,7 +49,9 @@ module.exports = {
     ]
   },
   plugins: [
-    new rspack.HtmlRspackPlugin()
+    new rspack.HtmlRspackPlugin({
+      template: './src/index.html',
+    })
   ],
   mode: 'development' // 或 'production' 视情况而定
 };

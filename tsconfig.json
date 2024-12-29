@@ -10,8 +10,6 @@
     "moduleResolution": "node",               // 模块解析策略
     "sourceMap": true,                        // 生成 source map 文件
     "noImplicitAny": true,                    // 禁止隐式的 any 类型
-    "noUnusedLocals": true,                   // 检查未使用的局部变量
-    "noUnusedParameters": true,               // 检查未使用的参数
     "noImplicitReturns": true,                // 检查函数是否有未返回值的代码路径
     "noFallthroughCasesInSwitch": true,       // 检查 switch 语句中的 fallthrough
     "resolveJsonModule": true,                // 允许导入 JSON 模块

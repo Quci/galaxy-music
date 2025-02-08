@@ -1,2 +1,4 @@
 # galaxy-music
-distribute music in the galaxy
+project discription: Display plenty of muisc with 3d animation.
+
+In Development...

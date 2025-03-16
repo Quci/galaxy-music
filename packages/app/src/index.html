@@ -112,26 +112,85 @@
             margin: 0;
             font-weight: 300;
         }
+        #labels-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .celestial-label {
+            position: absolute;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            white-space: nowrap;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        #player-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+        #player-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        button {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 <body>
-    <div id="canvas-container"></div>
-    
+    <div id="canvas-container">
+        <div id="labels-container"></div>
+        <canvas></canvas>
+    </div>
     <div id="title-container">
         <h1 id="app-title">Dreamy Cosmos</h1>
         <p id="subtitle">A musical journey through the universe</p>
     </div>
-    
     <div id="info-panel">
         <h2 id="song-title">Select a celestial body</h2>
         <h3 id="song-artist"></h3>
         <p id="celestial-info">Navigate through the cosmic dream and discover songs represented by magical celestial bodies.</p>
     </div>
-    
     <div id="instructions">
-        <p>🔄 Mouse: Rotate view</p>
-        <p>🔍 Scroll: Zoom in/out</p>
-        <p>👆 Click: Select celestial body</p>
+        <p> Mouse: Rotate view</p>
+        <p> Scroll: Zoom in/out</p>
+        <p> Click: Select celestial body</p>
+    </div>
+    <div id="player-container" style="display: none;">
+        <div id="song-info">No song selected</div>
+        <div id="player-controls">
+            <button id="play-pause">Play</button>
+            <button id="stop">Stop</button>
+        </div>
     </div>
 </body>
 </html>

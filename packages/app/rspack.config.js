@@ -8,6 +8,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   devServer: {
+    port: 9005, // 修改为新的端口号
     static: [
       {
         directory: path.join(__dirname, 'dist')
@@ -18,7 +19,6 @@ module.exports = {
 
     ],
     compress: true,
-    port: 9000,
     open: true
   },
   resolve: {
@@ -55,4 +55,3 @@ module.exports = {
   ],
   mode: 'development' // 或 'production' 视情况而定
 };
-

@@ -18,6 +18,17 @@ let composer: EffectComposer;
 let controls: TrackballControls;
 let currentCelestialBody: THREE.Object3D | null = null;
 let clock: THREE.Clock;
+let raycaster: THREE.Raycaster;
+let mouse: THREE.Vector2;
+let currentPlayingMusic: number = -1;
+
+// 音乐列表
+const musicList = [
+  "//music.163.com/outchain/player?type=2&id=1977970262&auto=1&height=66",
+  "//music.163.com/outchain/player?type=2&id=1940453571&auto=1&height=66",
+  "//music.163.com/outchain/player?type=2&id=2068989324&auto=1&height=66",
+  "//music.163.com/outchain/player?type=2&id=2647018610&auto=1&height=66"
+];
 
 // 保存所有标签
 const songLabels: THREE.Sprite[] = [];
@@ -79,6 +90,12 @@ function init() {
   
   // 添加天体
   createCelestialBodies();
+  
+  // 创建音乐播放器
+  createMusicPlayer();
+  
+  // 添加射线检测器，用于捕获天体点击事件
+  setupRaycaster();
   
   // 添加窗口大小改变事件监听
   window.addEventListener('resize', onWindowResize);
@@ -427,6 +444,144 @@ function createCelestialBodies() {
   });
   
   console.log(`已创建 ${celestialBodies.length} 个天体和标签，按立体太极形状排列`);
+}
+
+// 创建音乐播放器容器
+function createMusicPlayer() {
+  // 创建一个div来放置音乐播放器，放在右上角
+  const musicPlayerContainer = document.createElement('div');
+  musicPlayerContainer.id = 'music-player-container';
+  musicPlayerContainer.style.position = 'fixed';
+  musicPlayerContainer.style.top = '20px';
+  musicPlayerContainer.style.right = '20px';
+  musicPlayerContainer.style.zIndex = '1000';
+  musicPlayerContainer.style.width = '330px';
+  musicPlayerContainer.style.height = '86px';
+  musicPlayerContainer.style.opacity = '0.5'; // 设置透明度为0.5
+  document.body.appendChild(musicPlayerContainer);
+  
+  // 添加当前播放信息
+  const musicInfo = document.createElement('div');
+  musicInfo.id = 'music-info';
+  musicInfo.style.position = 'fixed';
+  musicInfo.style.top = '110px'; // 放在播放器下方
+  musicInfo.style.right = '20px';
+  musicInfo.style.color = 'white';
+  musicInfo.style.fontFamily = 'Arial, sans-serif';
+  musicInfo.style.fontSize = '14px';
+  musicInfo.style.padding = '5px 10px';
+  musicInfo.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+  musicInfo.style.borderRadius = '5px';
+  musicInfo.style.textShadow = '0 0 5px black';
+  musicInfo.textContent = '点击星体播放音乐';
+  document.body.appendChild(musicInfo);
+  
+  console.log('音乐播放器已创建');
+}
+
+// 播放或切换音乐
+function playRandomMusic() {
+  const musicPlayerContainer = document.getElementById('music-player-container');
+  const musicInfo = document.getElementById('music-info');
+  
+  if (!musicPlayerContainer || !musicInfo) return;
+  
+  // 清空当前播放器
+  musicPlayerContainer.innerHTML = '';
+  
+  // 随机选择不同于当前播放的音乐
+  let newMusicIndex;
+  do {
+    newMusicIndex = Math.floor(Math.random() * musicList.length);
+  } while (newMusicIndex === currentPlayingMusic && musicList.length > 1);
+  
+  currentPlayingMusic = newMusicIndex;
+  
+  // 创建iframe - 依赖网易云音乐的auto=1参数自动播放音乐
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('frameborder', 'no');
+  iframe.setAttribute('border', '0');
+  iframe.setAttribute('marginwidth', '0');
+  iframe.setAttribute('marginheight', '0');
+  iframe.width = '330';
+  iframe.height = '86';
+  iframe.src = musicList[currentPlayingMusic];
+  iframe.id = 'music-iframe';
+  
+  // 添加到容器
+  musicPlayerContainer.appendChild(iframe);
+  
+  // 更新信息
+  musicInfo.textContent = `正在播放音乐 ${currentPlayingMusic + 1}/${musicList.length}`;
+  
+  console.log(`正在播放音乐 ${currentPlayingMusic + 1}`);
+}
+
+// 设置射线检测器用于检测点击
+function setupRaycaster() {
+  // 初始化射线检测器和鼠标向量
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+  
+  // 添加点击事件监听
+  window.addEventListener('click', onDocumentClick, false);
+  
+  console.log('射线检测器已设置');
+}
+
+// 处理点击事件
+function onDocumentClick(event: MouseEvent) {
+  // 计算鼠标位置的归一化设备坐标 (-1 到 +1)
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+  
+  // 使用相机和鼠标位置更新射线
+  raycaster.setFromCamera(mouse, camera);
+  
+  // 计算射线和天体的交叉点
+  const intersects = raycaster.intersectObjects(celestialBodies);
+  
+  // 如果有交叉点，则选择第一个
+  if (intersects.length > 0) {
+    const selectedObject = intersects[0].object;
+    
+    // 处理层级模型（如果对象是一个组）
+    let celestialBodyObject = selectedObject;
+    while (celestialBodyObject.parent && !celestialBodies.includes(celestialBodyObject)) {
+      celestialBodyObject = celestialBodyObject.parent;
+    }
+    
+    // 如果找到有效的天体对象
+    if (celestialBodies.includes(celestialBodyObject)) {
+      // 播放音乐
+      playRandomMusic();
+      
+      // 高亮选中的天体（可选）
+      highlightCelestialBody(celestialBodyObject);
+    }
+  }
+}
+
+// 高亮选中的天体
+function highlightCelestialBody(celestialBody: THREE.Object3D) {
+  // 如果之前有选中的天体，恢复其原始比例
+  if (currentCelestialBody && currentCelestialBody !== celestialBody) {
+    currentCelestialBody.scale.set(1, 1, 1);
+  }
+  
+  // 设置新选中的天体
+  currentCelestialBody = celestialBody;
+  
+  // 稍微放大以示高亮
+  celestialBody.scale.set(1.2, 1.2, 1.2);
+  
+  // 5秒后恢复原始大小
+  setTimeout(() => {
+    if (currentCelestialBody === celestialBody) {
+      celestialBody.scale.set(1, 1, 1);
+      currentCelestialBody = null;
+    }
+  }, 5000);
 }
 
 // 启动应用

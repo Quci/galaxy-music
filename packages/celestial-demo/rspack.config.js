@@ -8,7 +8,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   devServer: {
-    port: 9006, // 使用不同于app的端口
+    port: 9007, // 使用不同于app的端口
     static: [
       {
         directory: path.join(__dirname, 'dist')

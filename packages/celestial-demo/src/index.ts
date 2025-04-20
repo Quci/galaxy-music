@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { createPlanet, createStar, createBlackHole } from './styles/celestial-styles';
+import { createPlanet, createStar, createBlackHole, createMoon, createComet, createNeutronStar, createNebula, createGalaxy } from './styles/celestial-styles';
 
 // 全局变量
 let scene: THREE.Scene;
@@ -151,6 +151,37 @@ function initControlPanel() {
       createCelestialBody();
     });
     
+    // 新增天体类型按钮
+    document.getElementById('btn-moon')?.addEventListener('click', () => {
+      setActiveButton('btn-moon');
+      currentType = 'moon';
+      createCelestialBody();
+    });
+    
+    document.getElementById('btn-comet')?.addEventListener('click', () => {
+      setActiveButton('btn-comet');
+      currentType = 'comet';
+      createCelestialBody();
+    });
+    
+    document.getElementById('btn-neutronstar')?.addEventListener('click', () => {
+      setActiveButton('btn-neutronstar');
+      currentType = 'neutronstar';
+      createCelestialBody();
+    });
+    
+    document.getElementById('btn-nebula')?.addEventListener('click', () => {
+      setActiveButton('btn-nebula');
+      currentType = 'nebula';
+      createCelestialBody();
+    });
+    
+    document.getElementById('btn-galaxy')?.addEventListener('click', () => {
+      setActiveButton('btn-galaxy');
+      currentType = 'galaxy';
+      createCelestialBody();
+    });
+    
     // 颜色选择器
     const colorPalette = document.getElementById('color-palette');
     if (colorPalette) {
@@ -279,10 +310,32 @@ function createCelestialBody() {
         currentCelestialBody = createBlackHole(options);
         updateDebug(`创建黑洞: 大小=${options.size}, 颜色=${options.color}`);
         break;
+      case 'moon':
+        currentCelestialBody = createMoon(options);
+        updateDebug(`创建月球: 大小=${options.size}, 颜色=${options.color}`);
+        break;
+      case 'comet':
+        currentCelestialBody = createComet(options);
+        updateDebug(`创建彗星: 大小=${options.size}, 颜色=${options.color}`);
+        break;
+      case 'neutronstar':
+        currentCelestialBody = createNeutronStar(options);
+        updateDebug(`创建中子星: 大小=${options.size}, 颜色=${options.color}`);
+        break;
+      case 'nebula':
+        currentCelestialBody = createNebula(options);
+        updateDebug(`创建星云: 大小=${options.size}, 颜色=${options.color}`);
+        break;
+      case 'galaxy':
+        currentCelestialBody = createGalaxy(options);
+        updateDebug(`创建星系: 大小=${options.size}, 颜色=${options.color}`);
+        break;
     }
     
     // 添加到场景
-    scene.add(currentCelestialBody);
+    if (currentCelestialBody) {
+      scene.add(currentCelestialBody);
+    }
   } catch (error) {
     console.error('创建天体错误:', error);
     updateDebug('创建天体错误: ' + (error as Error).message);

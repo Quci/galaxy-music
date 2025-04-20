@@ -21,6 +21,9 @@ let clock: THREE.Clock;
 let raycaster: THREE.Raycaster;
 let mouse: THREE.Vector2;
 let currentPlayingMusic: number = -1;
+let mouseDownTime: number = 0; // 记录鼠标按下的时间
+let isMouseDown: boolean = false; // 记录鼠标是否处于按下状态
+let lastClickPosition = { x: 0, y: 0 }; // 记录鼠标按下时的位置
 
 // 音乐列表
 const musicList = [
@@ -523,14 +526,55 @@ function setupRaycaster() {
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
   
-  // 添加点击事件监听
-  window.addEventListener('click', onDocumentClick, false);
+  // 添加鼠标按下事件监听
+  window.addEventListener('mousedown', onMouseDown, false);
+  
+  // 添加鼠标释放事件监听
+  window.addEventListener('mouseup', onMouseUp, false);
   
   console.log('射线检测器已设置');
 }
 
-// 处理点击事件
-function onDocumentClick(event: MouseEvent) {
+// 处理鼠标按下事件
+function onMouseDown(event: MouseEvent) {
+  // 记录鼠标按下的时间
+  mouseDownTime = Date.now();
+  isMouseDown = true;
+  
+  // 记录鼠标按下的位置
+  lastClickPosition.x = event.clientX;
+  lastClickPosition.y = event.clientY;
+}
+
+// 处理鼠标释放事件
+function onMouseUp(event: MouseEvent) {
+  // 如果鼠标没有处于按下状态，直接返回
+  if (!isMouseDown) return;
+  
+  // 计算鼠标按下和释放之间的时间差（毫秒）
+  const mouseUpTime = Date.now();
+  const timeDiff = mouseUpTime - mouseDownTime;
+  
+  // 计算鼠标移动距离
+  const moveDistance = Math.sqrt(
+    Math.pow(event.clientX - lastClickPosition.x, 2) + 
+    Math.pow(event.clientY - lastClickPosition.y, 2)
+  );
+  
+  // 重置鼠标状态
+  isMouseDown = false;
+  
+  // 如果时间差小于1秒且移动距离小于10像素，视为有效点击
+  if (timeDiff < 1000 && moveDistance < 10) {
+    console.log(`有效点击: 时间差=${timeDiff}ms, 移动距离=${moveDistance.toFixed(2)}px`);
+    onValidClick(event);
+  } else {
+    console.log(`忽略操作: 时间差=${timeDiff}ms, 移动距离=${moveDistance.toFixed(2)}px`);
+  }
+}
+
+// 处理有效点击事件
+function onValidClick(event: MouseEvent) {
   // 计算鼠标位置的归一化设备坐标 (-1 到 +1)
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;

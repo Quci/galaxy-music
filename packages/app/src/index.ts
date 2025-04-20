@@ -19,6 +19,28 @@ interface Song {
   celestialBody: CelestialBody;
 }
 
+interface MovementParams {
+  velocity: THREE.Vector3;     // 当前速度向量
+  maxSpeed: number;            // 最大速度
+  acceleration: number;        // 加速度系数
+  changeDirectionChance: number; // 改变方向的概率
+  currentTarget: THREE.Vector3; // 当前目标点
+  targetReachedThreshold: number; // 认为已到达目标的距离阈值
+  lastDirectionChange: number;   // 上次改变方向的时间
+  minDirectionChangeInterval: number; // 最短方向改变间隔
+  personalSpace: number;       // 个体空间，用于避让其他天体
+}
+
+interface OrbitParams {
+  center: THREE.Vector3;
+  radius: number;
+  speed: number;
+  direction: THREE.Vector3;
+  phase: number;
+  type: string; // 运动类型
+  boundingRadius: number; // 活动边界半径
+}
+
 // Custom shader for dreamy effect
 const DreamyShader = {
   uniforms: {
@@ -311,80 +333,21 @@ function createCelestialBodiesFromSongs() {
     
     console.log('Songs data loaded:', songs.length, 'songs found');
     
-    // 按类型组织天体，避免拥挤
-    const regions = {
-      planet: new THREE.Vector3(-1, 0, 0), // 增加偏移以增大天体间距
-      star: new THREE.Vector3(1, 0, 0),    // 增加偏移以增大天体间距
-      blackHole: new THREE.Vector3(0, 0, 1), // 增加偏移以增大天体间距
-      moon: new THREE.Vector3(0, 0, -1), // 增加偏移以增大天体间距
-      comet: new THREE.Vector3(-1, 0, 1), // 增加偏移以增大天体间距
-      neutronStar: new THREE.Vector3(1, 0, 1), // 增加偏移以增大天体间距
-      nebula: new THREE.Vector3(-1, 0, -1), // 增加偏移以增大天体间距
-      galaxy: new THREE.Vector3(1, 0, -1) // 增加偏移以增大天体间距
-    };
-    
-    const regionRadius = 40; // 增加区域半径，让天体更分散
-    
-    // 显示全部天体
-    // const maxBodies = 30; // 限制为30个天体
-    
-    songs.forEach((song, index) => {
-      // 允许显示所有歌曲
-      // if (index >= maxBodies) return;
+    // 在整个3D空间中分布天体
+    songs.forEach((song) => {
+      // 使用球坐标系来确保天体分布在整个3D空间而不是平面上
+      const radius = THREE.MathUtils.randFloat(15, 70); 
+      const theta = Math.random() * Math.PI * 2;  // 水平角度 0-2π
+      const phi = Math.acos(2 * Math.random() - 1); // 垂直角度 0-π
       
-      let celestialObject: THREE.Object3D | null = null;
+      const x = radius * Math.sin(phi) * Math.cos(theta);
+      const y = radius * Math.sin(phi) * Math.sin(theta);
+      const z = radius * Math.cos(phi);
       
-      // 创建不同类型的天体
-      switch (song.celestialBody.type) {
-        case 'planet':
-          celestialObject = createPlanet(song.celestialBody);
-          break;
-        case 'star':
-          celestialObject = createStar(song.celestialBody);
-          break;
-        case 'blackHole':
-          celestialObject = createBlackHole(song.celestialBody);
-          break;
-        // 可以根据需要添加其他天体类型
-        default:
-          celestialObject = createPlanet(song.celestialBody); // 默认创建行星
-      }
+      const position = new THREE.Vector3(x, y, z);
       
-      if (celestialObject) {
-        // 降低天体尺寸，使场景不那么拥挤
-        celestialObject.scale.multiplyScalar(0.7);
-        
-        // 从此类型的区域获取基础位置
-        const regionCenter = regions[song.celestialBody.type as keyof typeof regions] || new THREE.Vector3(0, 0, 0);
-        
-        // 在区域内添加随机偏移
-        const theta = Math.random() * Math.PI * 2; // 随机角度
-        const phi = Math.acos(2 * Math.random() - 1); // 随机倾角
-        const radius = regionRadius * (0.5 + Math.random() * 0.5); // 从中心的随机距离
-        
-        const offset = new THREE.Vector3(
-          radius * Math.sin(phi) * Math.cos(theta),
-          radius * Math.sin(phi) * Math.sin(theta),
-          radius * Math.cos(phi)
-        );
-        
-        // 设置位置
-        const position = regionCenter.clone().multiplyScalar(regionRadius).add(offset);
-        celestialObject.position.copy(position);
-        
-        // 添加到场景并跟踪
-        scene.add(celestialObject);
-        celestialBodies.push(celestialObject);
-        
-        // 创建精灵文本标签
-        const textColor = song.celestialBody.color;
-        const label = new SpriteLabel(song.title, textColor);
-        label.attachTo(celestialObject);
-        spriteLabels.push(label);
-        
-        // 将歌曲数据存储
-        bodyData.push({ object: celestialObject, song });
-      }
+      // 创建天体
+      createBodyObject(song, position);
     });
     
     console.log('Total celestial bodies created:', celestialBodies.length);
@@ -447,22 +410,93 @@ function animate() {
 
 // Update the celestial bodies animation
 function updateCelestialBodies(deltaTime: number) {
+  // 定义宇宙边界球体半径
+  const universeRadius = 80;
+
   celestialBodies.forEach(body => {
-    // Handle standard rotation
+    // 处理自转
     if (body.userData.rotationSpeed) {
       if (body.userData.rotationAxis) {
-        // Rotate around custom axis
+        // 绕自定义轴旋转
         body.rotateOnAxis(body.userData.rotationAxis, body.userData.rotationSpeed);
       } else {
-        // Default Y-axis rotation
+        // 默认绕Y轴旋转
         body.rotation.y += body.userData.rotationSpeed;
       }
     }
     
-    // Handle pulsing for stars
+    // 处理星体脉动
     if (body.userData.pulseSpeed) {
-      const scale = 1 + Math.sin(Date.now() * 0.001 * body.userData.pulseSpeed) * 0.05;
+      body.userData.pulseTime = (body.userData.pulseTime || 0) + deltaTime;
+      const scale = 1 + Math.sin(body.userData.pulseTime * body.userData.pulseSpeed) * 0.1;
       body.scale.set(scale, scale, scale);
+    }
+    
+    // 处理自由游动
+    if (body.userData.movementParams) {
+      const movement = body.userData.movementParams as MovementParams;
+      
+      // 累计时间
+      movement.lastDirectionChange += deltaTime;
+      
+      // 检查是否需要改变目标点
+      const distanceToTarget = body.position.distanceTo(movement.currentTarget);
+      if (distanceToTarget < movement.targetReachedThreshold || 
+          (movement.lastDirectionChange > movement.minDirectionChangeInterval && 
+           Math.random() < movement.changeDirectionChance)) {
+        
+        // 选择一个新的随机目标点
+        movement.currentTarget.set(
+          THREE.MathUtils.randFloatSpread(120),
+          THREE.MathUtils.randFloatSpread(120),
+          THREE.MathUtils.randFloatSpread(120)
+        ).normalize().multiplyScalar(THREE.MathUtils.randFloat(20, 60));
+        
+        // 重置计时器
+        movement.lastDirectionChange = 0;
+      }
+      
+      // 计算朝向目标的方向
+      const direction = new THREE.Vector3().subVectors(movement.currentTarget, body.position).normalize();
+      
+      // 应用加速度朝向目标方向
+      const acceleration = direction.clone().multiplyScalar(movement.acceleration * deltaTime);
+      movement.velocity.add(acceleration);
+      
+      // 限制最大速度
+      if (movement.velocity.length() > movement.maxSpeed) {
+        movement.velocity.normalize().multiplyScalar(movement.maxSpeed);
+      }
+      
+      // 轻微的随机运动 - 模拟水中波动
+      movement.velocity.x += THREE.MathUtils.randFloatSpread(0.5) * deltaTime;
+      movement.velocity.y += THREE.MathUtils.randFloatSpread(0.5) * deltaTime;
+      movement.velocity.z += THREE.MathUtils.randFloatSpread(0.5) * deltaTime;
+      
+      // 应用速度更新位置
+      body.position.addScaledVector(movement.velocity, deltaTime * 2);
+      
+      // 检查是否超出宇宙边界，如果是则反弹
+      if (body.position.length() > universeRadius) {
+        // 超出边界，将位置拉回边界内
+        body.position.normalize().multiplyScalar(universeRadius * 0.95);
+        
+        // 反弹速度，但加入一些随机性
+        movement.velocity.negate().multiplyScalar(0.7);
+        movement.velocity.x += THREE.MathUtils.randFloatSpread(2);
+        movement.velocity.y += THREE.MathUtils.randFloatSpread(2);
+        movement.velocity.z += THREE.MathUtils.randFloatSpread(2);
+        movement.velocity.normalize().multiplyScalar(movement.maxSpeed * 0.5);
+        
+        // 设置新的目标点朝向宇宙中心
+        movement.currentTarget.set(0, 0, 0).add(
+          new THREE.Vector3(
+            THREE.MathUtils.randFloatSpread(30),
+            THREE.MathUtils.randFloatSpread(30),
+            THREE.MathUtils.randFloatSpread(30)
+          )
+        );
+      }
     }
   });
   
@@ -509,12 +543,61 @@ function createBodyObject(song: Song, position: THREE.Vector3) {
   // 设置位置
   object.position.copy(position);
   
+  // 根据天体类型设置不同的运动参数
+  let speed = 0;
+  let changeRate = 0;
+  
+  switch (body.type) {
+    case 'planet':
+      // 行星：中等速度，中等变向频率
+      speed = THREE.MathUtils.randFloat(3, 5);
+      changeRate = 0.01;
+      break;
+    case 'star':
+      // 恒星：慢速漂浮，很少变向
+      speed = THREE.MathUtils.randFloat(1, 2);
+      changeRate = 0.003;
+      break;
+    case 'blackHole':
+      // 黑洞：快速，频繁变向
+      speed = THREE.MathUtils.randFloat(4, 7);
+      changeRate = 0.02;
+      break;
+    default:
+      speed = THREE.MathUtils.randFloat(2, 4);
+      changeRate = 0.008;
+  }
+  
+  // 添加自由游动参数
+  const movementParams: MovementParams = {
+    velocity: new THREE.Vector3(
+      THREE.MathUtils.randFloatSpread(2), 
+      THREE.MathUtils.randFloatSpread(2), 
+      THREE.MathUtils.randFloatSpread(2)
+    ).normalize().multiplyScalar(speed * 0.5),
+    maxSpeed: speed,
+    acceleration: speed * 0.1,
+    changeDirectionChance: changeRate,
+    currentTarget: new THREE.Vector3(
+      THREE.MathUtils.randFloatSpread(100),
+      THREE.MathUtils.randFloatSpread(100),
+      THREE.MathUtils.randFloatSpread(100)
+    ).normalize().multiplyScalar(THREE.MathUtils.randFloat(20, 60)),
+    targetReachedThreshold: 5,
+    lastDirectionChange: 0,
+    minDirectionChangeInterval: THREE.MathUtils.randFloat(2, 5),
+    personalSpace: body.size * 4
+  };
+  
+  // 将自由游动参数存储在对象的userData中
+  object.userData.movementParams = movementParams;
+  
   // 添加到场景
   scene.add(object);
   celestialBodies.push(object);
   
   // 创建精灵文本标签
-  const textColor = body.textColor || '#ffffff';
+  const textColor = body.color;
   const label = new SpriteLabel(song.title, textColor);
   label.attachTo(object);
   spriteLabels.push(label);

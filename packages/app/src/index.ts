@@ -5,6 +5,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import songsData from './data/celestial-songs.json';
+import { createPlanet, createStar, createBlackHole, createMoon, createComet, createNeutronStar, createNebula, createGalaxy } from './styles/celestial-styles';
 
 // Type definitions
 interface CelestialBody {
@@ -525,19 +526,42 @@ function createBodyObject(song: Song, position: THREE.Vector3) {
   const body = song.celestialBody;
   let object: THREE.Object3D | null = null;
   
+  // 创建选项对象，适配celestial-styles中的函数参数格式
+  const options = {
+    color: body.color,
+    size: body.size,
+    hasRings: Math.random() > 0.6,
+    hasGlow: true,
+    hasParticles: true
+  };
+  
   switch (body.type) {
     case 'planet':
-      object = createPlanet(body);
+      object = createPlanet(options);
       break;
     case 'star':
-      object = createStar(body);
+      object = createStar(options);
       break;
     case 'blackHole':
-      object = createBlackHole(body);
+      object = createBlackHole(options);
       break;
-    // 可以根据需要添加其他天体类型
+    case 'moon':
+      object = createMoon(options);
+      break;
+    case 'comet':
+      object = createComet(options);
+      break;
+    case 'neutronStar':
+      object = createNeutronStar(options);
+      break;
+    case 'nebula':
+      object = createNebula(options);
+      break;
+    case 'galaxy':
+      object = createGalaxy(options);
+      break;
     default:
-      object = createPlanet(body); // 默认创建行星
+      object = createPlanet(options); // 默认创建行星
   }
   
   // 设置位置
@@ -562,6 +586,31 @@ function createBodyObject(song: Song, position: THREE.Vector3) {
       // 黑洞：快速，频繁变向
       speed = THREE.MathUtils.randFloat(4, 7);
       changeRate = 0.02;
+      break;
+    case 'moon':
+      // 月球：较慢速度，中等变向
+      speed = THREE.MathUtils.randFloat(2, 4);
+      changeRate = 0.008;
+      break;
+    case 'comet':
+      // 彗星：高速，直线运动为主
+      speed = THREE.MathUtils.randFloat(6, 9);
+      changeRate = 0.005;
+      break;
+    case 'neutronStar':
+      // 中子星：中速，偶尔突然加速
+      speed = THREE.MathUtils.randFloat(3, 6);
+      changeRate = 0.015;
+      break;
+    case 'nebula':
+      // 星云：缓慢漂移
+      speed = THREE.MathUtils.randFloat(0.5, 1.5);
+      changeRate = 0.002;
+      break;
+    case 'galaxy':
+      // 星系：极慢移动
+      speed = THREE.MathUtils.randFloat(0.2, 1);
+      changeRate = 0.001;
       break;
     default:
       speed = THREE.MathUtils.randFloat(2, 4);
@@ -606,438 +655,6 @@ function createBodyObject(song: Song, position: THREE.Vector3) {
   bodyData.push({object, song});
   
   return object;
-}
-
-// 创建行星材质 - 修复白块问题
-function createPlanetMaterial(color: THREE.Color) {
-  return new THREE.MeshBasicMaterial({
-    color: color,
-    transparent: true,
-    opacity: 0.8,
-    alphaTest: 0.05,  // 使用alphaTest解决透明问题
-    depthWrite: false  // 避免深度写入问题
-  });
-}
-
-// 创建行星光晕材质 - 修复白块问题
-function createPlanetGlowMaterial(color: THREE.Color) {
-  return new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: color.clone() }
-    },
-    vertexShader: `
-      varying vec3 vNormal;
-      
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      varying vec3 vNormal;
-      
-      void main() {
-        float intensity = 1.0 - dot(vNormal, vec3(0.0, 0.0, 1.0));
-        intensity = pow(intensity, 1.5);
-        gl_FragColor = vec4(color, intensity * 0.5);
-      }
-    `,
-    transparent: true,
-    alphaTest: 0.01,  // 使用alphaTest解决透明问题
-    side: THREE.BackSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-}
-
-// Create a planet - 优化版本，解决白色块问题
-function createPlanet(body: CelestialBody): THREE.Group {
-  const group = new THREE.Group();
-  
-  // 行星核心
-  const geometry = new THREE.SphereGeometry(body.size, 32, 32);
-  const material = createPlanetMaterial(new THREE.Color(body.color));
-  
-  const core = new THREE.Mesh(geometry, material);
-  group.add(core);
-  
-  // 大气光晕
-  const glowGeometry = new THREE.SphereGeometry(body.size * 1.2, 32, 32);
-  const glowMaterial = createPlanetGlowMaterial(new THREE.Color(body.color));
-  
-  const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-  group.add(glow);
-  
-  // 环系统（如果适用）
-  if (Math.random() > 0.6) {
-    const ringGeometry = new THREE.RingGeometry(
-      body.size * 1.5,
-      body.size * 2.5,
-      64
-    );
-    
-    const ringMaterial = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(body.color).multiplyScalar(1.2),
-      transparent: true,
-      opacity: 0.4,
-      alphaTest: 0.01,  // 使用alphaTest解决透明问题
-      side: THREE.DoubleSide,
-      depthWrite: false
-    });
-    
-    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    ring.rotation.x = Math.PI / 2;
-    group.add(ring);
-  }
-  
-  // 添加少量悬浮粒子以增强梦幻质感，但避免过度使用
-  const particleCount = 30;
-  const particleGeometry = new THREE.BufferGeometry();
-  const particlePositions = new Float32Array(particleCount * 3);
-  
-  for (let i = 0; i < particleCount; i++) {
-    const radius = body.size * THREE.MathUtils.randFloat(1.3, 2.0);
-    const angle = Math.random() * Math.PI * 2;
-    const height = THREE.MathUtils.randFloatSpread(body.size * 1.5);
-    
-    particlePositions[i * 3] = Math.cos(angle) * radius;
-    particlePositions[i * 3 + 1] = height;
-    particlePositions[i * 3 + 2] = Math.sin(angle) * radius;
-  }
-  
-  particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-  
-  const particleMaterial = new THREE.PointsMaterial({
-    color: new THREE.Color(body.color).multiplyScalar(1.2),
-    size: 0.15,
-    transparent: true,
-    opacity: 0.6,
-    alphaTest: 0.01,  // 使用alphaTest解决透明问题
-    depthWrite: false
-  });
-  
-  const particles = new THREE.Points(particleGeometry, particleMaterial);
-  group.add(particles);
-  
-  // 在需要时设置自旋转
-  group.userData = { 
-    rotationSpeed: THREE.MathUtils.randFloat(0.001, 0.003), 
-    wobbleSpeed: THREE.MathUtils.randFloat(0.0005, 0.001) 
-  };
-  
-  return group;
-}
-
-// Create a star - 优化版本，解决白色块问题
-function createStar(body: CelestialBody): THREE.Group {
-  const group = new THREE.Group();
-  
-  // 恒星核心
-  const coreGeometry = new THREE.SphereGeometry(body.size * 0.7, 32, 32);
-  const coreMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color(body.color) },
-      time: { value: 0 }
-    },
-    vertexShader: `
-      varying vec3 vNormal;
-      uniform float time;
-      
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        vec3 pos = position * (1.0 + sin(time * 0.5) * 0.02);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      uniform float time;
-      varying vec3 vNormal;
-      
-      void main() {
-        float pulse = 0.9 + 0.1 * sin(time * 0.5);
-        float gradient = 0.6 + 0.4 * dot(vNormal, vec3(0, 0, 1));
-        vec3 finalColor = color * gradient * pulse;
-        gl_FragColor = vec4(finalColor, 0.9);
-      }
-    `,
-    transparent: true,
-    alphaTest: 0.01, // 添加alphaTest解决透明问题
-    depthWrite: false
-  });
-  
-  const core = new THREE.Mesh(coreGeometry, coreMaterial);
-  group.add(core);
-  core.userData.time = 0;
-  specialEffects.push(core);
-  
-  // 恒星光晕
-  const glowGeometry = new THREE.SphereGeometry(body.size, 32, 32);
-  const glowMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color(body.color) },
-      time: { value: 0 }
-    },
-    vertexShader: `
-      varying vec3 vNormal;
-      
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      varying vec3 vNormal;
-      
-      void main() {
-        // 边缘光晕效果
-        float rim = 1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0)));
-        rim = pow(rim, 3.0);
-        
-        vec3 glow = color * rim;
-        gl_FragColor = vec4(glow, rim * 0.6);
-      }
-    `,
-    transparent: true,
-    alphaTest: 0.01, // 添加alphaTest解决透明问题
-    side: THREE.BackSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  
-  const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-  group.add(glow);
-  
-  // 添加少量光芒射线
-  const rayCount = 4;
-  const rayGeometry = new THREE.CylinderGeometry(0.1, 0.3, body.size * 5, 8, 1);
-  
-  for (let i = 0; i < rayCount; i++) {
-    const angle = (Math.PI * 2 / rayCount) * i;
-    
-    const rayMaterial = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(body.color),
-      transparent: true,
-      opacity: 0.15,
-      alphaTest: 0.01, // 添加alphaTest解决透明问题
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    
-    const ray = new THREE.Mesh(rayGeometry, rayMaterial);
-    
-    // 设置光芒的方向
-    ray.rotation.z = Math.PI / 2;
-    ray.rotation.y = angle;
-    
-    // 随机旋转效果
-    ray.userData = {
-      rotationSpeed: THREE.MathUtils.randFloat(0.005, 0.01),
-      originalRotation: angle
-    };
-    
-    specialEffects.push(ray);
-    group.add(ray);
-  }
-  
-  // 添加星尘粒子
-  const dustCount = 100;
-  const dustGeometry = new THREE.BufferGeometry();
-  const dustPositions = new Float32Array(dustCount * 3);
-  
-  for (let i = 0; i < dustCount; i++) {
-    const radius = body.size * THREE.MathUtils.randFloat(1.5, 3.0);
-    const angle = Math.random() * Math.PI * 2;
-    const heightRange = body.size * 1.5;
-    const height = THREE.MathUtils.randFloatSpread(heightRange);
-    
-    dustPositions[i * 3] = Math.cos(angle) * radius;
-    dustPositions[i * 3 + 1] = height;
-    dustPositions[i * 3 + 2] = Math.sin(angle) * radius;
-  }
-  
-  dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
-  
-  const dustMaterial = new THREE.PointsMaterial({
-    color: new THREE.Color(body.color),
-    size: 0.1,
-    transparent: true,
-    opacity: 0.4,
-    alphaTest: 0.01, // 添加alphaTest解决透明问题
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  
-  const dust = new THREE.Points(dustGeometry, dustMaterial);
-  group.add(dust);
-  
-  group.userData = { 
-    rotationSpeed: THREE.MathUtils.randFloat(0.001, 0.002)
-  };
-  
-  return group;
-}
-
-// Create a black hole - 优化版本，解决白色块问题
-function createBlackHole(body: CelestialBody): THREE.Group {
-  const group = new THREE.Group();
-  
-  // 事件视界 - 使用柔和的黑色球体
-  const horizonGeometry = new THREE.SphereGeometry(body.size * 0.7, 32, 32);
-  const horizonMaterial = new THREE.MeshBasicMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: 0.8,
-    alphaTest: 0.01 // 添加alphaTest解决透明问题
-  });
-  
-  const horizon = new THREE.Mesh(horizonGeometry, horizonMaterial);
-  group.add(horizon);
-  
-  // 梦幻光环效果
-  const glowGeometry = new THREE.SphereGeometry(body.size * 1.1, 32, 32);
-  const glowMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color(body.color || 0x6a0dad) },
-      time: { value: 0 }
-    },
-    vertexShader: `
-      varying vec3 vNormal;
-      uniform float time;
-      
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      uniform float time;
-      varying vec3 vNormal;
-      
-      void main() {
-        // 边缘光晕效果
-        float rim = 1.0 - abs(dot(vNormal, vec3(0, 0, 1)));
-        rim = pow(rim, 2.0);
-        
-        // 脉动效果
-        float pulse = 0.8 + 0.2 * sin(time * 0.5);
-        rim *= pulse;
-        
-        vec3 glowColor = color * rim;
-        gl_FragColor = vec4(glowColor, rim * 0.6);
-      }
-    `,
-    transparent: true,
-    alphaTest: 0.01, // 添加alphaTest解决透明问题
-    side: THREE.BackSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  
-  const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-  glow.userData = { time: 0 };
-  group.add(glow);
-  specialEffects.push(glow);
-  
-  // 简化的漩涡盘
-  const diskGeometry = new THREE.RingGeometry(body.size * 1.2, body.size * 3, 64, 4);
-  const diskMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color(body.color || 0x9370db) },
-      time: { value: 0 }
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      varying float vDistance;
-      
-      void main() {
-        vUv = uv;
-        vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-        vDistance = length(position.xy) / (${body.size} * 3.0);
-        gl_Position = projectionMatrix * viewMatrix * worldPosition;
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 color;
-      uniform float time;
-      varying vec2 vUv;
-      varying float vDistance;
-      
-      void main() {
-        // 创建平滑的漩涡效果
-        float angle = atan(vUv.y - 0.5, vUv.x - 0.5);
-        float dist = distance(vUv, vec2(0.5));
-        
-        // 柔和的渐变
-        float gradient = smoothstep(0.4, 0.5, 1.0 - vDistance);
-        
-        // 流动的漩涡
-        float swirl = sin(angle * 6.0 + time * 0.5 + 10.0 * vDistance);
-        float pattern = smoothstep(0.3, 0.7, swirl);
-        
-        // 梦幻色彩变化
-        vec3 outerColor = vec3(0.6, 0.4, 0.8); // 梦幻紫色
-        vec3 innerColor = color;
-        vec3 finalColor = mix(outerColor, innerColor, vDistance);
-        
-        float alpha = gradient * (0.3 + 0.1 * pattern);
-        alpha *= (1.0 - vDistance * 0.8); // 向外渐变消失
-        
-        gl_FragColor = vec4(finalColor, alpha);
-      }
-    `,
-    transparent: true,
-    alphaTest: 0.01, // 添加alphaTest解决透明问题
-    side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  
-  const disk = new THREE.Mesh(diskGeometry, diskMaterial);
-  disk.rotation.x = Math.PI / 2;
-  disk.userData = { time: 0 };
-  group.add(disk);
-  specialEffects.push(disk);
-  
-  // 添加微光粒子
-  const particleCount = 100;
-  const particleGeometry = new THREE.BufferGeometry();
-  const particlePositions = new Float32Array(particleCount * 3);
-  
-  for (let i = 0; i < particleCount; i++) {
-    const radius = body.size * THREE.MathUtils.randFloat(1.2, 3.0);
-    const angle = Math.random() * Math.PI * 2;
-    const height = THREE.MathUtils.randFloatSpread(body.size * 0.6);
-    
-    particlePositions[i * 3] = Math.cos(angle) * radius;
-    particlePositions[i * 3 + 1] = height;
-    particlePositions[i * 3 + 2] = Math.sin(angle) * radius;
-  }
-  
-  particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-  
-  const particleMaterial = new THREE.PointsMaterial({
-    color: new THREE.Color(body.color || 0xb19cd9),
-    size: 0.1,
-    transparent: true,
-    opacity: 0.5,
-    alphaTest: 0.01, // 添加alphaTest解决透明问题
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  
-  const particles = new THREE.Points(particleGeometry, particleMaterial);
-  group.add(particles);
-  
-  // 旋转效果
-  group.userData = { 
-    rotationSpeed: THREE.MathUtils.randFloat(0.002, 0.005)
-  };
-  
-  return group;
 }
 
 // Handle window resize

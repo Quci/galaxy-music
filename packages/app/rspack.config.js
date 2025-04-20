@@ -8,15 +8,14 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   devServer: {
-    port: 9005, // 修改为新的端口号
+    port: 9020, // 修改为另一个不太可能被占用的端口号
     static: [
       {
         directory: path.join(__dirname, 'dist')
       },
       {
         directory: path.join(__dirname, 'assets')
-      },
-
+      }
     ],
     compress: true,
     open: true
@@ -55,5 +54,3 @@ module.exports = {
   ],
   mode: 'development' // 或 'production' 视情况而定
 };
-
-

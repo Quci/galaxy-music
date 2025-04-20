@@ -22,7 +22,7 @@
       "title": "不溯",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2c3e50",
         "size": 1.1
       }
@@ -58,7 +58,7 @@
       "title": "参商",
       "artist": "古风",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#3498db",
         "size": 1.0
       }
@@ -94,7 +94,7 @@
       "title": "大鱼",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#1abc9c",
         "size": 1.4
       }
@@ -112,7 +112,7 @@
       "title": "东流",
       "artist": "古风",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#3498db",
         "size": 0.9
       }
@@ -121,7 +121,7 @@
       "title": "不羁",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2c3e50",
         "size": 1.2
       }
@@ -130,7 +130,7 @@
       "title": "无羁",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2c3e50",
         "size": 1.2
       }
@@ -202,7 +202,7 @@
       "title": "栖凰",
       "artist": "古风",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#e17055",
         "size": 1.0
       }
@@ -211,7 +211,7 @@
       "title": "不老梦",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#6c5ce7",
         "size": 1.1
       }
@@ -274,7 +274,7 @@
       "title": "红颜旧",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#d63031",
         "size": 0.9
       }
@@ -355,7 +355,7 @@
       "title": "四万秋",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#8e44ad",
         "size": 1.3
       }
@@ -373,7 +373,7 @@
       "title": "九万字",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#3498db",
         "size": 1.2
       }
@@ -382,7 +382,7 @@
       "title": "相思垢",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#34495e",
         "size": 0.9
       }
@@ -391,7 +391,7 @@
       "title": "黄泉月",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#f1c40f",
         "size": 1.1
       }
@@ -418,7 +418,7 @@
       "title": "叹浮沉",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2c3e50",
         "size": 1.0
       }
@@ -472,7 +472,7 @@
       "title": "黯然销魂",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#353b48",
         "size": 1.2
       }
@@ -481,7 +481,7 @@
       "title": "浮生未歇",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#9c88ff",
         "size": 1.3
       }
@@ -508,7 +508,7 @@
       "title": "天命风流",
       "artist": "古风",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#fbc531",
         "size": 1.1
       }
@@ -517,7 +517,7 @@
       "title": "天地为念",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#00a8ff",
         "size": 1.4
       }
@@ -571,7 +571,7 @@
       "title": "逆世成局",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 1.3
       }
@@ -589,7 +589,7 @@
       "title": "清明上河图",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#1e90ff",
         "size": 1.3
       }
@@ -598,7 +598,7 @@
       "title": "墨香·战城南",
       "artist": "古风",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#2f3542",
         "size": 1.2
       }
@@ -607,7 +607,7 @@
       "title": "镇命歌·画皮",
       "artist": "古风",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#ff4757",
         "size": 1.2
       }
@@ -616,7 +616,7 @@
       "title": "再逢明月照九州",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#eccc68",
         "size": 1.4
       }
@@ -625,7 +625,7 @@
       "title": "紫禁城里的似水流年",
       "artist": "古风",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#5352ed",
         "size": 1.3
       }
@@ -634,7 +634,7 @@
       "title": "毒",
       "artist": "现代",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 0.8
       }
@@ -697,7 +697,7 @@
       "title": "无所不能",
       "artist": "流行",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#1e90ff",
         "size": 1.0
       }
@@ -724,7 +724,7 @@
       "title": "我的悲伤是水做的",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#70a1ff",
         "size": 1.0
       }
@@ -814,7 +814,7 @@
       "title": "人质",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 0.9
       }
@@ -850,7 +850,7 @@
       "title": "暗号",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 0.8
       }
@@ -877,7 +877,7 @@
       "title": "丝路",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#ffa502",
         "size": 1.2
       }
@@ -976,7 +976,7 @@
       "title": "童话镇",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#ff9ff3",
         "size": 1.1
       }
@@ -1093,7 +1093,7 @@
       "title": "到不了",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 0.9
       }
@@ -1111,7 +1111,7 @@
       "title": "面壁者",
       "artist": "流行",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#2f3640",
         "size": 1.0
       }
@@ -1129,7 +1129,7 @@
       "title": "孤勇者",
       "artist": "流行",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#ff6b6b",
         "size": 1.1
       }
@@ -1183,7 +1183,7 @@
       "title": "永远永远",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#5f27cd",
         "size": 1.2
       }
@@ -1273,7 +1273,7 @@
       "title": "香格里拉",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#c56cf0",
         "size": 1.2
       }
@@ -1318,7 +1318,7 @@
       "title": "真相是假",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 1.0
       }
@@ -1363,7 +1363,7 @@
       "title": "三寸天堂",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#5352ed",
         "size": 1.1
       }
@@ -1372,7 +1372,7 @@
       "title": "最后一页",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 0.9
       }
@@ -1381,7 +1381,7 @@
       "title": "无法克制",
       "artist": "流行",
       "celestialBody": {
-        "type": "neutronStar",
+        "type": "star",
         "color": "#ff6348",
         "size": 0.9
       }
@@ -1417,7 +1417,7 @@
       "title": "悲伤的秋千",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#576574",
         "size": 0.9
       }
@@ -1435,7 +1435,7 @@
       "title": "旅行的意义",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#70a1ff",
         "size": 1.0
       }
@@ -1453,7 +1453,7 @@
       "title": "会呼吸的痛",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 1.0
       }
@@ -1489,7 +1489,7 @@
       "title": "拿走了什么",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 0.9
       }
@@ -1525,7 +1525,7 @@
       "title": "爱你不是两三天",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#ff6b81",
         "size": 1.1
       }
@@ -1543,7 +1543,7 @@
       "title": "永不失联的爱",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#ff6b81",
         "size": 1.1
       }
@@ -1579,7 +1579,7 @@
       "title": "亲爱的那不是爱情",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#2f3640",
         "size": 1.0
       }
@@ -1588,7 +1588,7 @@
       "title": "想你的365天",
       "artist": "流行",
       "celestialBody": {
-        "type": "galaxy",
+        "type": "nebula",
         "color": "#ff9ff3",
         "size": 1.0
       }
@@ -1597,7 +1597,7 @@
       "title": "我知道你很难过",
       "artist": "流行",
       "celestialBody": {
-        "type": "blackHole",
+        "type": "blackhole",
         "color": "#576574",
         "size": 0.9
       }

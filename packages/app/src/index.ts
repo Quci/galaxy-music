@@ -67,15 +67,20 @@ camera.position.z = 30;
 const clock = new THREE.Clock();
 
 // Renderer setup
+const canvas = document.querySelector('canvas');
+if (!canvas) throw new Error('Canvas element not found');
+
 const renderer = new THREE.WebGLRenderer({ 
   antialias: true,
-  alpha: true
+  alpha: true,
+  canvas: canvas
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setClearColor(0x000000, 0); // 设置透明背景
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
-document.getElementById('canvas-container')?.appendChild(renderer.domElement);
+// 不再需要手动添加到DOM，因为我们已经在创建时指定了canvas
 
 // Post-processing
 const composer = new EffectComposer(renderer);
@@ -189,108 +194,95 @@ function createStarField() {
   scene.add(stars);
 }
 
-// 全新的HTML标签系统，代替Three.js精灵
-class HTMLLabel {
-  element: HTMLElement;
+// 新增：添加Three.js精灵标签系统 - 这将替代HTML标签
+class SpriteLabel {
+  sprite: THREE.Sprite;
   object3D: THREE.Object3D | null = null;
-  offset: THREE.Vector3;
-  camera: THREE.Camera | null = null;
-  
-  constructor(text: string, color: string = '#ffffff') {
-    // 创建DOM元素
-    this.element = document.createElement('div');
-    this.element.className = 'celestial-label';
-    this.element.textContent = text;
-    this.element.style.color = color;
-    this.element.style.position = 'absolute';
-    this.element.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    this.element.style.padding = '4px 8px';
-    this.element.style.borderRadius = '4px';
-    this.element.style.fontSize = '14px';
-    this.element.style.fontWeight = 'bold';
-    this.element.style.fontFamily = 'Arial, sans-serif';
-    this.element.style.pointerEvents = 'none'; // 避免鼠标交互
-    this.element.style.transition = 'opacity 0.3s';
-    this.element.style.whiteSpace = 'nowrap';
-    this.element.style.textAlign = 'center';
-    this.element.style.transform = 'translate(-50%, -100%)'; // 居中并位于物体上方
-    this.element.style.visibility = 'hidden'; // 初始隐藏
 
-    // 添加到DOM
-    const container = document.getElementById('canvas-container');
-    if (container) {
-      container.appendChild(this.element);
-    } else {
-      document.body.appendChild(this.element);
-    }
+  constructor(text: string, color: string = '#ffffff') {
+    // 创建画布以绘制文本
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not get 2D context');
     
-    // 初始化偏移量
-    this.offset = new THREE.Vector3(0, 1.5, 0);
+    // 设置画布大小
+    canvas.width = 256;
+    canvas.height = 64;
+    
+    // 绘制背景
+    context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 设置文本样式
+    context.font = 'bold 20px Arial';
+    context.fillStyle = color;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    
+    // 绘制文本
+    context.fillText(text, canvas.width / 2, canvas.height / 2);
+    
+    // 创建纹理
+    const texture = new THREE.CanvasTexture(canvas);
+    
+    // 创建材质
+    const spriteMaterial = new THREE.SpriteMaterial({ 
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      depthTest: true
+    });
+    
+    // 创建精灵
+    this.sprite = new THREE.Sprite(spriteMaterial);
+    this.sprite.scale.set(2, 0.5, 1);
+    
+    // 设置初始位置和可见性
+    this.sprite.visible = true;
   }
   
   // 将标签与3D对象关联
-  attachTo(object: THREE.Object3D, camera: THREE.Camera) {
+  attachTo(object: THREE.Object3D) {
     this.object3D = object;
-    this.camera = camera;
-  }
-  
-  // 根据3D对象位置更新HTML元素位置
-  update() {
-    if (!this.object3D || !this.camera) return;
     
-    // 获取世界坐标
-    const worldPos = this.object3D.position.clone();
-    worldPos.add(this.offset);
-    
-    // 转换为屏幕坐标
-    const screenPos = worldPos.project(this.camera);
-    
-    // 获取视口尺寸
-    const halfWidth = window.innerWidth / 2;
-    const halfHeight = window.innerHeight / 2;
-    
-    // 计算屏幕上的像素坐标
-    const x = (screenPos.x * halfWidth) + halfWidth;
-    const y = -(screenPos.y * halfHeight) + halfHeight;
-    
-    // 检查是否在视口内
-    const isOnScreen = (
-      x > 0 && x < window.innerWidth &&
-      y > 0 && y < window.innerHeight &&
-      screenPos.z < 1
-    );
-    
-    // 计算与摄像机的距离，用于控制显示/隐藏
-    const distance = this.object3D.position.distanceTo(this.camera.position);
-    
-    // 更新位置和可见性
-    if (isOnScreen) {
-      this.element.style.left = `${x}px`;
-      this.element.style.top = `${y}px`;
-      this.element.style.visibility = 'visible';
+    // 将精灵添加到场景
+    if (this.object3D) {
+      // 设置精灵位置为物体上方
+      this.sprite.position.copy(this.object3D.position);
+      this.sprite.position.y += 2.0; // 向上偏移
       
-      // 根据距离调整不透明度
-      const opacity = Math.min(1, Math.max(0.2, 1 - (distance / 200)));
-      this.element.style.opacity = opacity.toString();
-      
-      // 根据距离调整大小
-      const scale = Math.max(0.8, Math.min(1.2, 1 - (distance / 300)));
-      this.element.style.transform = `translate(-50%, -100%) scale(${scale})`;
-    } else {
-      this.element.style.visibility = 'hidden';
+      // 添加到场景
+      scene.add(this.sprite);
     }
   }
   
-  // 移除标签
+  // 更新精灵位置
+  update() {
+    if (!this.object3D) return;
+    
+    // 直接跟随对象位置，并保持在上方
+    const pos = this.object3D.position.clone();
+    pos.y += 2.0; // 保持在上方
+    this.sprite.position.copy(pos);
+    
+    // 计算距离摄像机的距离
+    const distance = this.sprite.position.distanceTo(camera.position);
+    
+    // 根据距离调整精灵的大小
+    const scale = Math.max(1, Math.min(3, 10 / Math.sqrt(distance)));
+    this.sprite.scale.set(scale * 2, scale * 0.5, 1);
+  }
+  
+  // 移除精灵
   remove() {
-    if (this.element && this.element.parentNode) {
-      this.element.parentNode.removeChild(this.element);
+    if (this.sprite.parent) {
+      this.sprite.parent.remove(this.sprite);
     }
   }
 }
 
-// 存储HTML标签
-const htmlLabels: HTMLLabel[] = [];
+// 存储精灵标签
+const spriteLabels: SpriteLabel[] = [];
 
 // Create celestial bodies
 const celestialBodies: THREE.Object3D[] = [];
@@ -384,11 +376,11 @@ function createCelestialBodiesFromSongs() {
         scene.add(celestialObject);
         celestialBodies.push(celestialObject);
         
-        // 创建HTML文本标签
+        // 创建精灵文本标签
         const textColor = song.celestialBody.color;
-        const label = new HTMLLabel(song.title, textColor);
-        label.attachTo(celestialObject, camera);
-        htmlLabels.push(label);
+        const label = new SpriteLabel(song.title, textColor);
+        label.attachTo(celestialObject);
+        spriteLabels.push(label);
         
         // 将歌曲数据存储
         bodyData.push({ object: celestialObject, song });
@@ -433,8 +425,8 @@ function animate() {
   const deltaTime = clock.getDelta();
   const elapsedTime = clock.getElapsedTime();
   
-  // 更新HTML标签位置
-  for (const label of htmlLabels) {
+  // 更新精灵标签位置
+  for (const label of spriteLabels) {
     label.update();
   }
 
@@ -521,11 +513,11 @@ function createBodyObject(song: Song, position: THREE.Vector3) {
   scene.add(object);
   celestialBodies.push(object);
   
-  // 创建HTML文本标签
+  // 创建精灵文本标签
   const textColor = body.textColor || '#ffffff';
-  const label = new HTMLLabel(song.title, textColor);
-  label.attachTo(object, camera);
-  htmlLabels.push(label);
+  const label = new SpriteLabel(song.title, textColor);
+  label.attachTo(object);
+  spriteLabels.push(label);
   
   // 将歌曲和对象关联起来
   bodyData.push({object, song});
@@ -718,7 +710,7 @@ function createStar(body: CelestialBody): THREE.Group {
       
       void main() {
         // 边缘光晕效果
-        float rim = 1.0 - abs(dot(vNormal, vec3(0, 0, 1)));
+        float rim = 1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0)));
         rim = pow(rim, 3.0);
         
         vec3 glow = color * rim;
@@ -1099,7 +1091,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 在窗口大小改变时更新标签位置
 window.addEventListener('resize', () => {
-  for (const label of htmlLabels) {
+  for (const label of spriteLabels) {
     label.update();
   }
 });

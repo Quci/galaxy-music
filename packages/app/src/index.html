@@ -9,17 +9,23 @@
         
         body {
             margin: 0;
+            padding: 0;
             overflow: hidden;
             font-family: 'Quicksand', sans-serif;
             color: white;
             background: #000;
+            width: 100vw;
+            height: 100vh;
         }
         #canvas-container {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
             z-index: 1;
         }
         #info-panel {
@@ -170,20 +176,6 @@
     <div id="canvas-container">
         <div id="labels-container"></div>
         <canvas></canvas>
-    </div>
-    <div id="title-container">
-        <h1 id="app-title">Dreamy Cosmos</h1>
-        <p id="subtitle">A musical journey through the universe</p>
-    </div>
-    <div id="info-panel">
-        <h2 id="song-title">Select a celestial body</h2>
-        <h3 id="song-artist"></h3>
-        <p id="celestial-info">Navigate through the cosmic dream and discover songs represented by magical celestial bodies.</p>
-    </div>
-    <div id="instructions">
-        <p> Mouse: Rotate view</p>
-        <p> Scroll: Zoom in/out</p>
-        <p> Click: Select celestial body</p>
     </div>
     <div id="player-container" style="display: none;">
         <div id="song-info">No song selected</div>

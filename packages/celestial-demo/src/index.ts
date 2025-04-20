@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { createPlanet, createStar, createBlackHole, createMoon, createComet, createNeutronStar, createNebula, createGalaxy } from './styles/celestial-styles';
+import { createPlanet, createStar, createBlackHole, createMoon, createComet, createNebula } from './styles/celestial-styles';
 
 // 全局变量
 let scene: THREE.Scene;
@@ -164,21 +164,9 @@ function initControlPanel() {
       createCelestialBody();
     });
     
-    document.getElementById('btn-neutronstar')?.addEventListener('click', () => {
-      setActiveButton('btn-neutronstar');
-      currentType = 'neutronstar';
-      createCelestialBody();
-    });
-    
     document.getElementById('btn-nebula')?.addEventListener('click', () => {
       setActiveButton('btn-nebula');
       currentType = 'nebula';
-      createCelestialBody();
-    });
-    
-    document.getElementById('btn-galaxy')?.addEventListener('click', () => {
-      setActiveButton('btn-galaxy');
-      currentType = 'galaxy';
       createCelestialBody();
     });
     
@@ -318,17 +306,9 @@ function createCelestialBody() {
         currentCelestialBody = createComet(options);
         updateDebug(`创建彗星: 大小=${options.size}, 颜色=${options.color}`);
         break;
-      case 'neutronstar':
-        currentCelestialBody = createNeutronStar(options);
-        updateDebug(`创建中子星: 大小=${options.size}, 颜色=${options.color}`);
-        break;
       case 'nebula':
         currentCelestialBody = createNebula(options);
         updateDebug(`创建星云: 大小=${options.size}, 颜色=${options.color}`);
-        break;
-      case 'galaxy':
-        currentCelestialBody = createGalaxy(options);
-        updateDebug(`创建星系: 大小=${options.size}, 颜色=${options.color}`);
         break;
     }
     

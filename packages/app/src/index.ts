@@ -216,7 +216,10 @@ function getTaijiPosition(index: number, totalCount: number, universeRadius: num
 
 // 加载太极运动函数
 function rotateTaiji() {
-  // 更新场景中所有天体的位置
+  // 获取当前时间
+  const time = Date.now() * 0.001;
+  
+  // 遍历每个天体
   celestialBodies.forEach((body, index) => {
     // 获取用户数据
     const userData = body.userData;
@@ -225,11 +228,14 @@ function rotateTaiji() {
     const isYang = index < celestialBodies.length / 2;
     const rotationDirection = isYang ? 1 : -1;
     
+    // 保存天体前一个位置（用于彗星方向计算）
+    const previousPosition = body.position.clone();
+    
     // 获取当前位置
     const currentPos = body.position.clone();
     
     // 提取球面坐标
-    const radius = currentPos.length();
+    const radius = Math.sqrt(currentPos.x * currentPos.x + currentPos.z * currentPos.z);
     const theta = Math.atan2(currentPos.z, currentPos.x);
     
     // 计算新的角度 - 显著增加旋转速度
@@ -242,8 +248,21 @@ function rotateTaiji() {
     // 应用新位置，保持Y不变
     body.position.set(newX, currentPos.y, newZ);
     
-    // 天体自转，大幅增加速度
-    if (body.userData.rotation && body.userData.rotationSpeed) {
+    // 如果是彗星，让其头部朝向运动方向
+    if (userData.song && userData.song.celestialBody.type === 'comet') {
+      // 计算运动向量
+      const movementVector = new THREE.Vector3().subVectors(body.position, previousPosition);
+      if (movementVector.length() > 0.001) { // 确保运动量足够大，避免微小抖动
+        // 创建一个指向运动方向的临时向量（注意彗星在THREE.js中默认是沿着Z轴指向的）
+        const direction = new THREE.Vector3(0, 0, 1);
+        // 计算四元数，将Z轴旋转到运动方向
+        const quaternion = new THREE.Quaternion().setFromUnitVectors(direction, movementVector.normalize());
+        // 应用旋转
+        body.quaternion.copy(quaternion);
+      }
+    } 
+    // 其他天体正常自转
+    else if (body.userData.rotation && body.userData.rotationSpeed) {
       const rotationAxis = body.userData.rotation as THREE.Vector3;
       const rotationSpeed = body.userData.rotationSpeed as number;
       
@@ -371,15 +390,21 @@ function createCelestialBodies() {
       const position = getTaijiPosition(index, allBodies.length, universeRadius, bodyJitterMap);
       celestialBody.position.copy(position);
       
-      // 根据阴阳设置不同的旋转
-      if (index < yangBodies.length) {
-        // 阳天体顺时针缓慢旋转
-        celestialBody.userData.rotation = new THREE.Vector3(0, 1, 0);
-        celestialBody.userData.rotationSpeed = 0.03; // 大幅提高旋转速度
+      // 根据阴阳设置不同的旋转，但彗星不应该自转
+      if (body.type !== 'comet') {  // 彗星不自转
+        if (index < yangBodies.length) {
+          // 阳天体顺时针缓慢旋转
+          celestialBody.userData.rotation = new THREE.Vector3(0, 1, 0);
+          celestialBody.userData.rotationSpeed = 0.03; // 大幅提高旋转速度
+        } else {
+          // 阴天体逆时针缓慢旋转
+          celestialBody.userData.rotation = new THREE.Vector3(0, -1, 0);
+          celestialBody.userData.rotationSpeed = 0.03; // 大幅提高旋转速度
+        }
       } else {
-        // 阴天体逆时针缓慢旋转
-        celestialBody.userData.rotation = new THREE.Vector3(0, -1, 0);
-        celestialBody.userData.rotationSpeed = 0.03; // 大幅提高旋转速度
+        // 彗星应该保持尾部指向，不自转
+        celestialBody.userData.rotation = null;
+        celestialBody.userData.rotationSpeed = 0;
       }
       
       // 保存歌曲信息

@@ -443,6 +443,10 @@ export function createStar(body: any): THREE.Group {
     starGroup.add(heatParticles);
   }
   
+  // 更新恒星组的旋转速度 - 更明显的旋转效果
+  starGroup.userData.rotationSpeed = 0.02;
+  starGroup.userData.rotationAxis = new THREE.Vector3(0.1, 1, 0.1).normalize();
+  
   // 更新动画函数
   starGroup.userData.update = function(delta: number) {
     // 更新所有着色器时间
@@ -458,8 +462,12 @@ export function createStar(body: any): THREE.Group {
       }
     });
     
-    // 星体轻微自转
-    starGroup.rotation.y += 0.05 * delta;
+    // 星体自转
+    starGroup.rotation.set(
+      starGroup.rotation.x + starGroup.userData.rotationSpeed * delta * starGroup.userData.rotationAxis.x,
+      starGroup.rotation.y + starGroup.userData.rotationSpeed * delta * starGroup.userData.rotationAxis.y,
+      starGroup.rotation.z + starGroup.userData.rotationSpeed * delta * starGroup.userData.rotationAxis.z
+    );
   };
   
   return starGroup;

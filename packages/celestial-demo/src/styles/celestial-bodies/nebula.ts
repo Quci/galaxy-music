@@ -555,6 +555,10 @@ export function createNebula(body: any): THREE.Group {
     return texture;
   }
   
+  // 设置整体旋转参数
+  nebulaGroup.userData.rotationSpeed = 0.01;
+  nebulaGroup.userData.rotationAxis = new THREE.Vector3(0.2, 1, 0.3).normalize();
+  
   // 动画更新函数
   nebulaGroup.userData.update = function(delta: number) {
     const time = Date.now() * 0.001;
@@ -562,14 +566,15 @@ export function createNebula(body: any): THREE.Group {
     // 更新各个粒子系统的旋转
     nebulaGroup.children.forEach(child => {
       if (child instanceof THREE.Points && child.userData.rotationSpeed) {
+        // 给不同的粒子系统添加不同方向的旋转
+        child.rotation.x += child.userData.rotationSpeed * delta * 0.5;
         child.rotation.y += child.userData.rotationSpeed * delta;
+        child.rotation.z += child.userData.rotationSpeed * delta * 0.2;
       }
       
       // 更新星星闪烁
-      if (child.material && 
-          'material' in child && 
-          'uniforms' in child.material && 
-          child.material.uniforms &&
+      if ('material' in child && child.material instanceof THREE.ShaderMaterial && 
+          child.material.uniforms && 
           child.material.uniforms.time) {
         child.material.uniforms.time.value = time;
       }
@@ -578,6 +583,13 @@ export function createNebula(body: any): THREE.Group {
     // 整体轻微的呼吸效果
     const pulseFactor = Math.sin(time * 0.2) * 0.03 + 1.0;
     nebulaGroup.scale.set(pulseFactor, pulseFactor, pulseFactor);
+    
+    // 整体旋转
+    nebulaGroup.rotation.set(
+      nebulaGroup.rotation.x + nebulaGroup.userData.rotationSpeed * delta * nebulaGroup.userData.rotationAxis.x,
+      nebulaGroup.rotation.y + nebulaGroup.userData.rotationSpeed * delta * nebulaGroup.userData.rotationAxis.y, 
+      nebulaGroup.rotation.z + nebulaGroup.userData.rotationSpeed * delta * nebulaGroup.userData.rotationAxis.z
+    );
   };
   
   return nebulaGroup;

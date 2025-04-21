@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galaxy Music 天体样式展示</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    #canvas-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .info-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 5px;
+      z-index: 100;
+      max-width: 300px;
+    }
+    
+    .info-panel h1 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #3498db;
+    }
+    
+    .info-panel p {
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+    
+    .label {
+      position: absolute;
+      color: white;
+      font-size: 16px;
+      padding: 5px 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 3px;
+      pointer-events: none;
+      white-space: nowrap;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  
+  <div class="info-panel">
+    <h1>天体样式展示</h1>
+    <p>本页面展示了三种不同类型的天体样式：</p>
+    <p><strong>左侧：</strong> 行星 - 带有表面细节、环状结构和可能的卫星</p>
+    <p><strong>中间：</strong> 恒星 - 带有多层辉光效果、日冕射线和粒子大气</p>
+    <p><strong>右侧：</strong> 黑洞 - 带有事件视界、吸积盘、引力透镜效果和引力射线</p>
+    <p>使用鼠标拖动可以旋转视角，滚轮可以缩放。</p>
+  </div>
+  
+  <!-- 创建三个标签分别标识三种天体 -->
+  <div id="label-planet" class="label">行星</div>
+  <div id="label-star" class="label">恒星</div>
+  <div id="label-blackhole" class="label">黑洞</div>
+  
+  <script type="module">
+    import { CelestialDemo } from './celestial-demo-page.js';
+    
+    // 在页面加载完成后初始化天体演示
+    window.addEventListener('load', () => {
+      try {
+        // 创建天体演示实例
+        const demo = new CelestialDemo('canvas-container');
+        
+        // 设置标签位置
+        const updateLabels = () => {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          
+          // 行星标签位置
+          const planetLabel = document.getElementById('label-planet');
+          planetLabel.style.left = (width / 4) + 'px';
+          planetLabel.style.top = (height / 2 - 100) + 'px';
+          
+          // 恒星标签位置
+          const starLabel = document.getElementById('label-star');
+          starLabel.style.left = (width / 2) + 'px';
+          starLabel.style.top = (height / 2 - 100) + 'px';
+          
+          // 黑洞标签位置
+          const blackholeLabel = document.getElementById('label-blackhole');
+          blackholeLabel.style.left = (width * 3 / 4) + 'px';
+          blackholeLabel.style.top = (height / 2 - 100) + 'px';
+        };
+        
+        // 初始化标签位置
+        updateLabels();
+        
+        // 窗口大小改变时更新标签位置
+        window.addEventListener('resize', updateLabels);
+        
+        console.log('天体演示已初始化');
+      } catch (error) {
+        console.error('初始化天体演示时出错:', error);
+      }
+    });
+  </script>
+</body>
+</html>

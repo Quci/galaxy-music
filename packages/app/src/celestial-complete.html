@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Galaxy Music 天体样式展示</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    #canvas-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .info-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 5px;
+      z-index: 100;
+      max-width: 300px;
+    }
+    
+    .info-panel h1 {
+      margin-top: 0;
+      font-size: 24px;
+      color: #3498db;
+    }
+    
+    .info-panel p {
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+    
+    .label {
+      position: absolute;
+      color: white;
+      font-size: 16px;
+      padding: 5px 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 3px;
+      pointer-events: none;
+      white-space: nowrap;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+  <!-- 直接从CDN加载Three.js库，避免模块加载问题 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  
+  <div class="info-panel">
+    <h1>天体样式展示</h1>
+    <p>本页面展示了三种不同类型的天体样式：</p>
+    <p><strong>左侧：</strong> 行星 - 带有表面细节、环状结构和可能的卫星</p>
+    <p><strong>中间：</strong> 恒星 - 带有多层辉光效果、日冕射线和粒子大气</p>
+    <p><strong>右侧：</strong> 黑洞 - 带有事件视界、吸积盘、引力透镜效果和引力射线</p>
+    <p>使用鼠标拖动可以旋转视角，滚轮可以缩放。</p>
+  </div>
+  
+  <!-- 创建三个标签分别标识三种天体 -->
+  <div id="label-planet" class="label">行星</div>
+  <div id="label-star" class="label">恒星</div>
+  <div id="label-blackhole" class="label">黑洞</div>
+  
+  <script>
+    // 全局变量
+    let scene, camera, renderer, controls;
+    let celestialBodies = [];
+    
+    // 初始化场景
+    function init() {
+      // 创建场景
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x000000);
+      
+      // 创建相机
+      const container = document.getElementById('canvas-container');
+      camera = new THREE.PerspectiveCamera(
+        75, 
+        window.innerWidth / window.innerHeight, 
+        0.1, 
+        1000
+      );
+      camera.position.z = 15;
+      
+      // 创建渲染器
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+      
+      // 创建控制器
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      
+      // 添加灯光
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(1, 1, 1);
+      scene.add(directionalLight);
+      
+      // 创建星空背景
+      createStarBackground();
+      
+      // 创建示例天体
+      createDemoCelestialBodies();
+      
+      // 设置标签位置
+      updateLabels();
+      
+      // 窗口大小调整事件
+      window.addEventListener('resize', onWindowResize);
+      
+      // 开始动画循环
+      animate();
+    }
+    
+    // 创建星空背景
+    function createStarBackground() {
+      const starsGeometry = new THREE.BufferGeometry();
+      const starsMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.05,
+        transparent: true
+      });
+      
+      const starsVertices = [];
+      for (let i = 0; i < 2000; i++) {
+        const x = (Math.random() - 0.5) * 2000;
+        const y = (Math.random() - 0.5) * 2000;
+        const z = (Math.random() - 0.5) * 2000;
+        starsVertices.push(x, y, z);
+      }
+      
+      starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+      const starField = new THREE.Points(starsGeometry, starsMaterial);
+      scene.add(starField);
+    }
+    
+    // 创建示例天体
+    function createDemoCelestialBodies() {
+      // 创建行星示例
+      const planet = createPlanet({
+        color: '#3498db',
+        size: 1.5
+      });
+      planet.position.x = -8;
+      celestialBodies.push(planet);
+      scene.add(planet);
+      
+      // 创建恒星示例
+      const star = createStar({
+        color: '#e74c3c',
+        size: 2
+      });
+      star.position.x = 0;
+      celestialBodies.push(star);
+      scene.add(star);
+      
+      // 创建黑洞示例
+      const blackHole = createBlackHole({
+        color: '#9b59b6',
+        size: 1.2
+      });
+      blackHole.position.x = 8;
+      celestialBodies.push(blackHole);
+      scene.add(blackHole);
+    }
+    
+    // 创建行星样式
+    function createPlanet(body) {
+      const planetSize = body.size || 1;
+      
+      // 创建行星组 - 可以包含多个组件
+      const planetGroup = new THREE.Group();
+      
+      // 创建行星主体
+      const planetGeometry = new THREE.SphereGeometry(planetSize, 32, 32);
+      const planetMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(body.color)
+      });
+      const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+      
+      // 添加表面细节 - 凹凸贴图效果
+      const bumpGeometry = new THREE.SphereGeometry(planetSize * 1.01, 32, 32);
+      const bumpMaterial = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(body.color).clone().multiplyScalar(1.4),
+        transparent: true,
+        opacity: 0.3,
+        wireframe: true
+      });
+      const bumpLayer = new THREE.Mesh(bumpGeometry, bumpMaterial);
+      
+      // 添加行星环
+      const ringSize = planetSize * THREE.MathUtils.randFloat(1.8, 2.5);
+      const ringWidth = planetSize * THREE.MathUtils.randFloat(0.2, 0.5);
+      const ringGeometry = new THREE.RingGeometry(
+        ringSize - ringWidth, 
+        ringSize, 
+        64
+      );
+      
+      // 随机环颜色 - 通常与行星基色相关但更亮
+      const baseColor = new THREE.Color(body.color);
+      const ringColor = new THREE.Color(body.color).multiplyScalar(1.3);
+      
+      const ringMaterial = new THREE.MeshBasicMaterial({
+        color: ringColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.6
+      });
+      
+      const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+      ring.rotation.x = Math.PI / 2;
+      ring.rotation.y = THREE.MathUtils.randFloatSpread(Math.PI / 6);
+      planetGroup.add(ring);
+      
+      // 添加环的粒子效果 - 增强环的细节
+      const particlesCount = 1000;
+      const particlesGeometry = new THREE.BufferGeometry();
+      const particlesPositions = new Float32Array(particlesCount * 3);
+      
+      for (let i = 0; i < particlesCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radiusVariation = THREE.MathUtils.randFloatSpread(ringWidth * 0.8);
+        const radius = ringSize - ringWidth / 2 + radiusVariation;
+        
+        particlesPositions[i * 3] = Math.cos(angle) * radius;
+        particlesPositions[i * 3 + 1] = THREE.MathUtils.randFloatSpread(0.1);
+        particlesPositions[i * 3 + 2] = Math.sin(angle) * radius;
+      }
+      
+      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPositions, 3));
+      
+      const particlesMaterial = new THREE.PointsMaterial({
+        color: ringColor,
+        size: 0.1,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+      planetGroup.add(particles);
+      
+      planetGroup.add(planet);
+      planetGroup.add(bumpLayer);
+      
+      // 设置自转速度和轴
+      planetGroup.userData.rotationSpeed = 0.005;
+      planetGroup.userData.rotationAxis = new THREE.Vector3(
+        0.1,
+        1,
+        0.1
+      ).normalize();
+      
+      return planetGroup;
+    }
+    
+    // 创建恒星样式
+    function createStar(body) {
+      const starSize = body.size || 1.5;
+      
+      // 创建恒星组
+      const starGroup = new THREE.Group();
+      
+      // 创建恒星核心
+      const coreGeometry = new THREE.SphereGeometry(starSize, 32, 32);
+      
+      // 恒星材质 - 发光效果
+      const coreColor = new THREE.Color(body.color);
+      const coreMaterial = new THREE.MeshBasicMaterial({ 
+        color: coreColor, 
+        transparent: true, 
+        opacity: 0.9
+      });
+      
+      const core = new THREE.Mesh(coreGeometry, coreMaterial);
+      starGroup.add(core);
+      
+      // 创建恒星外层 - 辉光效果
+      const glowSize = starSize * 1.2;
+      const glowGeometry = new THREE.SphereGeometry(glowSize, 32, 32);
+      
+      // 辉光材质 - 半透明
+      const glowColor = new THREE.Color(body.color).multiplyScalar(1.5);
+      
+      const glowMaterial = new THREE.MeshBasicMaterial({ 
+        color: glowColor, 
+        transparent: true, 
+        opacity: 0.3,
+        side: THREE.BackSide
+      });
+      
+      const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+      starGroup.add(glow);
+      
+      // 第三层辉光 - 更大更淡
+      const outerGlowSize = starSize * 1.5;
+      const outerGlowGeometry = new THREE.SphereGeometry(outerGlowSize, 32, 32);
+      const outerGlowMaterial = new THREE.MeshBasicMaterial({ 
+        color: glowColor, 
+        transparent: true, 
+        opacity: 0.15,
+        side: THREE.BackSide
+      });
+      
+      const outerGlow = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
+      starGroup.add(outerGlow);
+      
+      // 添加日冕射线
+      const coronaCount = 12;
+      for (let i = 0; i < coronaCount; i++) {
+        const rayLength = starSize * (0.5 + Math.random() * 1.5);
+        const rayWidth = starSize * (0.05 + Math.random() * 0.15);
+        
+        const rayGeometry = new THREE.BoxGeometry(rayWidth, rayLength, rayWidth);
+        const rayMaterial = new THREE.MeshBasicMaterial({ 
+          color: glowColor, 
+          transparent: true, 
+          opacity: 0.2 + Math.random() * 0.2
+        });
+        
+        const ray = new THREE.Mesh(rayGeometry, rayMaterial);
+        
+        // 随机角度放置射线
+        const angle = (i / coronaCount) * Math.PI * 2;
+        
+        // 旋转并放置射线
+        ray.position.x = Math.cos(angle) * (starSize + rayLength/2);
+        ray.position.y = Math.sin(angle) * (starSize + rayLength/2);
+        ray.rotation.z = angle + Math.PI/2;
+        
+        starGroup.add(ray);
+      }
+      
+      // 添加粒子效果 - 恒星大气
+      const particlesCount = 1000;
+      const particlesGeometry = new THREE.BufferGeometry();
+      const particlesPositions = new Float32Array(particlesCount * 3);
+      
+      for (let i = 0; i < particlesCount; i++) {
+        const radius = starSize * (1.1 + Math.random() * 0.7);
+        const phi = Math.acos(-1 + (2 * Math.random()));
+        const theta = Math.random() * Math.PI * 2;
+        
+        particlesPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+        particlesPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        particlesPositions[i * 3 + 2] = radius * Math.cos(phi);
+      }
+      
+      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPositions, 3));
+      
+      const particlesMaterial = new THREE.PointsMaterial({
+        color: glowColor,
+        size: 0.1,
+        transparent: true,
+        opacity: 0.6
+      });
+      
+      const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+      starGroup.add(particles);
+      
+      // 设置脉动效果
+      starGroup.userData.pulseSpeed = 1.5;
+      starGroup.userData.pulseTime = 0;
+      
+      // 轻微自转
+      starGroup.userData.rotationSpeed = 0.001;
+      
+      return starGroup;
+    }
+    
+    // 创建黑洞样式
+    function createBlackHole(body) {
+      const blackHoleSize = body.size || 1.2;
+      
+      // 创建黑洞组
+      const blackHoleGroup = new THREE.Group();
+      
+      // 创建黑洞事件视界（中心黑色球体）
+      const coreSize = blackHoleSize * 0.8;
+      const coreGeometry = new THREE.SphereGeometry(coreSize, 32, 32);
+      const coreMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.9
+      });
+      
+      const core = new THREE.Mesh(coreGeometry, coreMaterial);
+      blackHoleGroup.add(core);
+      
+      // 创建吸积盘
+      const diskOuterRadius = blackHoleSize * 3;
+      const diskInnerRadius = blackHoleSize * 1.2;
+      const diskGeometry = new THREE.RingGeometry(diskInnerRadius, diskOuterRadius, 64, 8);
+      
+      // 为吸积盘创建渐变颜色
+      const diskColors = [];
+      const diskVertexCount = diskGeometry.attributes.position.count;
+      
+      // 基础颜色
+      const baseColor = new THREE.Color(body.color);
+      
+      for (let i = 0; i < diskVertexCount; i++) {
+        // 内部更亮（偏白热），外部带有颜色
+        const t = i / diskVertexCount;
+        const vertexColor = new THREE.Color().lerpColors(
+          new THREE.Color(0xffffff),  // 内部颜色（白色）
+          baseColor,                  // 外部颜色
+          t
+        );
+        
+        diskColors.push(vertexColor.r, vertexColor.g, vertexColor.b);
+      }
+      
+      diskGeometry.setAttribute('color', new THREE.Float32BufferAttribute(diskColors, 3));
+      
+      const diskMaterial = new THREE.MeshBasicMaterial({ 
+        vertexColors: true,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      const disk = new THREE.Mesh(diskGeometry, diskMaterial);
+      
+      // 随机倾斜吸积盘
+      disk.rotation.x = Math.PI / 2;
+      
+      blackHoleGroup.add(disk);
+      
+      // 创建吸积盘粒子效果 - 增强细节
+      const particlesCount = 2000;
+      const particlesGeometry = new THREE.BufferGeometry();
+      const particlesPositions = new Float32Array(particlesCount * 3);
+      const particlesColors = new Float32Array(particlesCount * 3);
+      
+      for (let i = 0; i < particlesCount; i++) {
+        // 在吸积盘区域生成粒子
+        const angle = Math.random() * Math.PI * 2;
+        const distance = diskInnerRadius + Math.random() * (diskOuterRadius - diskInnerRadius);
+        
+        const x = Math.cos(angle) * distance;
+        const z = Math.sin(angle) * distance;
+        const y = (Math.random() - 0.5) * blackHoleSize * 0.3; // 薄盘
+        
+        particlesPositions[i * 3] = x;
+        particlesPositions[i * 3 + 1] = y;
+        particlesPositions[i * 3 + 2] = z;
+        
+        // 粒子颜色 - 从内到外
+        const t = (distance - diskInnerRadius) / (diskOuterRadius - diskInnerRadius);
+        const particleColor = new THREE.Color().lerpColors(
+          new THREE.Color(0xffffff),  // 内部颜色（白色）
+          baseColor,                  // 外部颜色
+          t
+        );
+        
+        particlesColors[i * 3] = particleColor.r;
+        particlesColors[i * 3 + 1] = particleColor.g;
+        particlesColors[i * 3 + 2] = particleColor.b;
+      }
+      
+      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlesPositions, 3));
+      particlesGeometry.setAttribute('color', new THREE.BufferAttribute(particlesColors, 3));
+      
+      const particlesMaterial = new THREE.PointsMaterial({
+        size: 0.12,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+      blackHoleGroup.add(particles);
+      
+      // 添加引力透镜扭曲效果 - 半透明球形
+      const lensSize = blackHoleSize * 1.5;
+      const lensGeometry = new THREE.SphereGeometry(lensSize, 32, 32);
+      const lensMaterial = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.1,
+        side: THREE.BackSide
+      });
+      
+      const lens = new THREE.Mesh(lensGeometry, lensMaterial);
+      blackHoleGroup.add(lens);
+      
+      // 添加引力射线
+      const rayCount = 4;
+      const rayColor = new THREE.Color(body.color);
+      
+      for (let i = 0; i < rayCount; i++) {
+        const rayLength = blackHoleSize * (3 + Math.random() * 3);
+        const rayGeometry = new THREE.CylinderGeometry(0.1, 0.3, rayLength, 6);
+        const rayMaterial = new THREE.MeshBasicMaterial({
+          color: rayColor,
+          transparent: true,
+          opacity: 0.4
+        });
+        
+        const ray = new THREE.Mesh(rayGeometry, rayMaterial);
+        
+        // 随机方向
+        const angle = (i / rayCount) * Math.PI * 2;
+        const elevationAngle = (Math.random() - 0.5) * Math.PI;
+        
+        // 放置并旋转射线
+        ray.position.x = Math.cos(angle) * Math.cos(elevationAngle) * rayLength/2;
+        ray.position.y = Math.sin(elevationAngle) * rayLength/2;
+        ray.position.z = Math.sin(angle) * Math.cos(elevationAngle) * rayLength/2;
+        
+        ray.lookAt(0, 0, 0);
+        ray.rotateX(Math.PI / 2);
+        
+        blackHoleGroup.add(ray);
+      }
+      
+      // 设置旋转
+      blackHoleGroup.userData.rotationSpeed = 0.003;
+      
+      return blackHoleGroup;
+    }
+    
+    // 动画循环
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // 更新控制器
+      controls.update();
+      
+      // 更新天体
+      updateCelestialBodies();
+      
+      // 渲染场景
+      renderer.render(scene, camera);
+    }
+    
+    // 更新天体
+    function updateCelestialBodies() {
+      const deltaTime = 0.016; // 假设约60fps
+      
+      celestialBodies.forEach(body => {
+        // 处理旋转
+        if (body.userData.rotationSpeed) {
+          if (body.userData.rotationAxis) {
+            body.rotateOnAxis(
+              body.userData.rotationAxis,
+              body.userData.rotationSpeed
+            );
+          } else {
+            body.rotation.y += body.userData.rotationSpeed;
+          }
+        }
+        
+        // 处理脉动
+        if (body.userData.pulseSpeed) {
+          body.userData.pulseTime = (body.userData.pulseTime || 0) + deltaTime;
+          
+          const pulseFactor = Math.sin(body.userData.pulseTime * body.userData.pulseSpeed) * 0.05;
+          const scale = 1 + pulseFactor;
+          
+          body.scale.set(scale, scale, scale);
+        }
+      });
+    }
+    
+    // 窗口大小调整
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      
+      // 更新标签位置
+      updateLabels();
+    }
+    
+    // 更新标签位置
+    function updateLabels() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      // 行星标签位置
+      const planetLabel = document.getElementById('label-planet');
+      planetLabel.style.left = (width / 4) + 'px';
+      planetLabel.style.top = (height / 2 - 100) + 'px';
+      
+      // 恒星标签位置
+      const starLabel = document.getElementById('label-star');
+      starLabel.style.left = (width / 2) + 'px';
+      starLabel.style.top = (height / 2 - 100) + 'px';
+      
+      // 黑洞标签位置
+      const blackholeLabel = document.getElementById('label-blackhole');
+      blackholeLabel.style.left = (width * 3 / 4) + 'px';
+      blackholeLabel.style.top = (height / 2 - 100) + 'px';
+    }
+    
+    // 页面加载完成后初始化
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>

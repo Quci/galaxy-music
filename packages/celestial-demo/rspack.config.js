@@ -1,5 +1,5 @@
 const path = require('path');
-const {rspack} = require('@rspack/core');
+const { rspack } = require('@rspack/core');
 
 module.exports = {
   entry: './src/index.ts',
@@ -8,14 +8,14 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   devServer: {
-    port: 9020, // 修改为另一个不太可能被占用的端口号
+    port: 9007, // 使用不同于app的端口
     static: [
       {
         directory: path.join(__dirname, 'dist')
       },
       {
         directory: path.join(__dirname, 'assets')
-      }
+      },
     ],
     compress: true,
     open: true
@@ -52,5 +52,5 @@ module.exports = {
       template: './src/index.html',
     })
   ],
-  mode: 'development' // 或 'production' 视情况而定
+  mode: 'development'
 };
